@@ -1,0 +1,325 @@
+{
+  "entities": {
+    "TradingAccount": {
+      "title": "TradingAccount",
+      "description": "User's forex trading account equity, drawdown tracking, and automated bot state.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Trader display name."
+        },
+        "accountBalance": {
+          "type": "number",
+          "description": "Current realized account balance in USD."
+        },
+        "startingBalance": {
+          "type": "number",
+          "description": "Initial account capital in USD."
+        },
+        "dailyStartEquity": {
+          "type": "number",
+          "description": "Equity at start of trading day for daily drawdown calculation."
+        },
+        "dailyRealizedPnl": {
+          "type": "number",
+          "description": "Realized profit and loss for the current session/day in USD."
+        },
+        "realizedPnl": {
+          "type": "number",
+          "description": "Cumulative realized profit and loss in USD."
+        },
+        "totalTrades": {
+          "type": "integer",
+          "description": "Total number of closed trades."
+        },
+        "winningTrades": {
+          "type": "integer",
+          "description": "Total number of profitable closed trades."
+        },
+        "botArmed": {
+          "type": "boolean",
+          "description": "Whether automated trade execution is armed."
+        },
+        "circuitBreakerTripped": {
+          "type": "boolean",
+          "description": "True when daily drawdown limit is breached, halting new entries."
+        },
+        "executionMode": {
+          "type": "string",
+          "enum": ["PAPER"],
+          "description": "Execution mode for automated trades."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on creation (FieldValue.serverTimestamp())."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on update (FieldValue.serverTimestamp())."
+        }
+      },
+      "required": [
+        "userId",
+        "displayName",
+        "accountBalance",
+        "startingBalance",
+        "dailyStartEquity",
+        "dailyRealizedPnl",
+        "realizedPnl",
+        "totalTrades",
+        "winningTrades",
+        "botArmed",
+        "circuitBreakerTripped",
+        "executionMode",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "BotRiskConfig": {
+      "title": "BotRiskConfig",
+      "description": "Strict risk management and technical indicator strategy parameters.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "riskPerTradePercent": {
+          "type": "number",
+          "description": "Percentage of account equity risked per trade (0.25 to 5.0)."
+        },
+        "maxDailyDrawdownPercent": {
+          "type": "number",
+          "description": "Maximum daily drawdown percentage before circuit breaker triggers (1.0 to 15.0)."
+        },
+        "maxOpenPositions": {
+          "type": "integer",
+          "description": "Maximum simultaneous open trades allowed (1 to 10)."
+        },
+        "minRiskRewardRatio": {
+          "type": "number",
+          "description": "Minimum required Risk:Reward ratio for entry approval (1.2 to 5.0)."
+        },
+        "atrStopMultiplier": {
+          "type": "number",
+          "description": "ATR(14) multiplier for stop-loss calibration (1.0 to 4.0)."
+        },
+        "trailingStopEnabled": {
+          "type": "boolean",
+          "description": "Whether automatic trailing stop & breakeven lock is enabled."
+        },
+        "breakEvenTriggerR": {
+          "type": "number",
+          "description": "R-multiple threshold to move stop-loss to exact entry price."
+        },
+        "emaFastPeriod": {
+          "type": "integer",
+          "description": "Fast EMA period (5 to 25)."
+        },
+        "emaSlowPeriod": {
+          "type": "integer",
+          "description": "Slow EMA period (15 to 100)."
+        },
+        "rsiPeriod": {
+          "type": "integer",
+          "description": "RSI lookback period (7 to 28)."
+        },
+        "rsiOversold": {
+          "type": "number",
+          "description": "RSI oversold threshold (15 to 40)."
+        },
+        "rsiOverbought": {
+          "type": "number",
+          "description": "RSI overbought threshold (60 to 85)."
+        },
+        "minConfluenceScore": {
+          "type": "integer",
+          "description": "Minimum aligned technical indicators required (2 to 4)."
+        },
+        "watchedPairs": {
+          "type": "array",
+          "description": "List of enabled currency pairs (1 to 8 items)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on update."
+        }
+      },
+      "required": [
+        "userId",
+        "riskPerTradePercent",
+        "maxDailyDrawdownPercent",
+        "maxOpenPositions",
+        "minRiskRewardRatio",
+        "atrStopMultiplier",
+        "trailingStopEnabled",
+        "breakEvenTriggerR",
+        "emaFastPeriod",
+        "emaSlowPeriod",
+        "rsiPeriod",
+        "rsiOversold",
+        "rsiOverbought",
+        "minConfluenceScore",
+        "watchedPairs",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ForexTrade": {
+      "title": "ForexTrade",
+      "description": "Automated or manually confirmed forex trade with exact entry, stop-loss, take-profit, and exit ledger.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID."
+        },
+        "pair": {
+          "type": "string",
+          "description": "Currency pair symbol such as EUR/USD."
+        },
+        "side": {
+          "type": "string",
+          "enum": ["BUY", "SELL"],
+          "description": "Trade direction."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["OPEN", "CLOSED"],
+          "description": "Lifecycle status of the position."
+        },
+        "lotSize": {
+          "type": "number",
+          "description": "Exact risk-calculated position size in standard lots."
+        },
+        "units": {
+          "type": "integer",
+          "description": "Position size in base currency units."
+        },
+        "entryPrice": {
+          "type": "number",
+          "description": "Exact entry execution price."
+        },
+        "stopLoss": {
+          "type": "number",
+          "description": "Exact stop-loss exit price."
+        },
+        "takeProfit": {
+          "type": "number",
+          "description": "Exact take-profit exit price."
+        },
+        "trailingStopPrice": {
+          "type": "number",
+          "description": "Dynamic trailing stop price (0.0 if inactive)."
+        },
+        "exitPrice": {
+          "type": "number",
+          "description": "Exact closing price (0.0 while open)."
+        },
+        "riskAmountUsd": {
+          "type": "number",
+          "description": "Capital risked in USD at entry."
+        },
+        "riskRewardRatio": {
+          "type": "number",
+          "description": "Planned reward-to-risk ratio."
+        },
+        "realizedPnlUsd": {
+          "type": "number",
+          "description": "Realized P&L in USD once closed."
+        },
+        "realizedPips": {
+          "type": "number",
+          "description": "Realized pips once closed."
+        },
+        "exitReason": {
+          "type": "string",
+          "enum": ["ACTIVE", "TP_HIT", "SL_HIT", "TRAILING_SL", "SIGNAL_REVERSAL", "MANUAL_CLOSE", "CIRCUIT_BREAKER"],
+          "description": "Reason the trade was closed or ACTIVE while open."
+        },
+        "signalSummary": {
+          "type": "string",
+          "description": "Technical indicator snapshot at trade entry."
+        },
+        "confluenceScore": {
+          "type": "integer",
+          "description": "Number of aligned technical indicators at entry (1 to 4)."
+        },
+        "timeframe": {
+          "type": "string",
+          "description": "Chart timeframe used for signal generation."
+        },
+        "openedAtMillis": {
+          "type": "integer",
+          "description": "Client epoch timestamp when opened."
+        },
+        "closedAtMillis": {
+          "type": "integer",
+          "description": "Client epoch timestamp when closed (0 while open)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp on update."
+        }
+      },
+      "required": [
+        "userId",
+        "pair",
+        "side",
+        "status",
+        "lotSize",
+        "units",
+        "entryPrice",
+        "stopLoss",
+        "takeProfit",
+        "trailingStopPrice",
+        "exitPrice",
+        "riskAmountUsd",
+        "riskRewardRatio",
+        "realizedPnlUsd",
+        "realizedPips",
+        "exitReason",
+        "signalSummary",
+        "confluenceScore",
+        "timeframe",
+        "openedAtMillis",
+        "closedAtMillis",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/TradingAccount" },
+      "description": "User trading account equity, drawdown status, and bot armed state."
+    },
+    "/users/{userId}/configs/{configId}": {
+      "schema": { "$ref": "#/entities/BotRiskConfig" },
+      "description": "User risk management and technical indicator strategy parameters."
+    },
+    "/users/{userId}/trades/{tradeId}": {
+      "schema": { "$ref": "#/entities/ForexTrade" },
+      "description": "User open and closed automated forex trades with exact entry/exit prices."
+    }
+  }
+}

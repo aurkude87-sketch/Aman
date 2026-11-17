@@ -1,0 +1,236 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
+    }
+
+    function isValidTradingAccount(data, userId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.userId == request.auth.uid &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 80 &&
+             (data.accountBalance is float || data.accountBalance is int) && data.accountBalance >= 0 && data.accountBalance <= 100000000 &&
+             (data.startingBalance is float || data.startingBalance is int) && data.startingBalance >= 100 && data.startingBalance <= 100000000 &&
+             (data.dailyStartEquity is float || data.dailyStartEquity is int) && data.dailyStartEquity >= 0 && data.dailyStartEquity <= 100000000 &&
+             (data.dailyRealizedPnl is float || data.dailyRealizedPnl is int) &&
+             (data.realizedPnl is float || data.realizedPnl is int) &&
+             data.totalTrades is int && data.totalTrades >= 0 &&
+             data.winningTrades is int && data.winningTrades >= 0 && data.winningTrades <= data.totalTrades &&
+             data.botArmed is bool &&
+             data.circuitBreakerTripped is bool &&
+             data.executionMode is string && data.executionMode in ['PAPER'] &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidBotRiskConfig(data, userId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.userId == request.auth.uid &&
+             (data.riskPerTradePercent is float || data.riskPerTradePercent is int) && data.riskPerTradePercent >= 0.25 && data.riskPerTradePercent <= 5.0 &&
+             (data.maxDailyDrawdownPercent is float || data.maxDailyDrawdownPercent is int) && data.maxDailyDrawdownPercent >= 1.0 && data.maxDailyDrawdownPercent <= 15.0 &&
+             data.maxOpenPositions is int && data.maxOpenPositions >= 1 && data.maxOpenPositions <= 10 &&
+             (data.minRiskRewardRatio is float || data.minRiskRewardRatio is int) && data.minRiskRewardRatio >= 1.2 && data.minRiskRewardRatio <= 5.0 &&
+             (data.atrStopMultiplier is float || data.atrStopMultiplier is int) && data.atrStopMultiplier >= 1.0 && data.atrStopMultiplier <= 4.0 &&
+             data.trailingStopEnabled is bool &&
+             (data.breakEvenTriggerR is float || data.breakEvenTriggerR is int) && data.breakEvenTriggerR >= 0.5 && data.breakEvenTriggerR <= 2.0 &&
+             data.emaFastPeriod is int && data.emaFastPeriod >= 5 && data.emaFastPeriod <= 25 &&
+             data.emaSlowPeriod is int && data.emaSlowPeriod >= 15 && data.emaSlowPeriod <= 100 &&
+             data.emaFastPeriod < data.emaSlowPeriod &&
+             data.rsiPeriod is int && data.rsiPeriod >= 7 && data.rsiPeriod <= 28 &&
+             (data.rsiOversold is float || data.rsiOversold is int) && data.rsiOversold >= 15.0 && data.rsiOversold <= 40.0 &&
+             (data.rsiOverbought is float || data.rsiOverbought is int) && data.rsiOverbought >= 60.0 && data.rsiOverbought <= 85.0 &&
+             data.minConfluenceScore is int && data.minConfluenceScore >= 2 && data.minConfluenceScore <= 4 &&
+             data.watchedPairs is list && data.watchedPairs.size() >= 1 && data.watchedPairs.size() <= 8 &&
+             data.watchedPairs[0] is string && data.watchedPairs[0].size() >= 3 && data.watchedPairs[0].size() <= 12 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidForexTrade(data, userId) {
+      return data.userId is string &&
+             data.userId == userId &&
+             data.userId == request.auth.uid &&
+             data.pair is string && data.pair.size() >= 3 && data.pair.size() <= 12 &&
+             data.side is string && data.side in ['BUY', 'SELL'] &&
+             data.status is string && data.status in ['OPEN', 'CLOSED'] &&
+             (data.lotSize is float || data.lotSize is int) && data.lotSize > 0.0 && data.lotSize <= 100.0 &&
+             data.units is int && data.units > 0 &&
+             (data.entryPrice is float || data.entryPrice is int) && data.entryPrice > 0.0 &&
+             (data.stopLoss is float || data.stopLoss is int) && data.stopLoss > 0.0 &&
+             (data.takeProfit is float || data.takeProfit is int) && data.takeProfit > 0.0 &&
+             (data.trailingStopPrice is float || data.trailingStopPrice is int) && data.trailingStopPrice >= 0.0 &&
+             (data.exitPrice is float || data.exitPrice is int) && data.exitPrice >= 0.0 &&
+             (data.riskAmountUsd is float || data.riskAmountUsd is int) && data.riskAmountUsd > 0.0 &&
+             (data.riskRewardRatio is float || data.riskRewardRatio is int) && data.riskRewardRatio >= 1.0 &&
+             (data.realizedPnlUsd is float || data.realizedPnlUsd is int) &&
+             (data.realizedPips is float || data.realizedPips is int) &&
+             data.exitReason is string && data.exitReason in ['ACTIVE', 'TP_HIT', 'SL_HIT', 'TRAILING_SL', 'SIGNAL_REVERSAL', 'MANUAL_CLOSE', 'CIRCUIT_BREAKER'] &&
+             data.signalSummary is string && data.signalSummary.size() >= 1 && data.signalSummary.size() <= 160 &&
+             data.confluenceScore is int && data.confluenceScore >= 1 && data.confluenceScore <= 4 &&
+             data.timeframe is string && data.timeframe.size() >= 1 && data.timeframe.size() <= 10 &&
+             data.openedAtMillis is int && data.openedAtMillis > 0 &&
+             data.closedAtMillis is int && data.closedAtMillis >= 0 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'displayName', 'accountBalance', 'startingBalance',
+                         'dailyStartEquity', 'dailyRealizedPnl', 'realizedPnl',
+                         'totalTrades', 'winningTrades', 'botArmed', 'circuitBreakerTripped',
+                         'executionMode', 'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'displayName', 'accountBalance', 'startingBalance',
+                         'dailyStartEquity', 'dailyRealizedPnl', 'realizedPnl',
+                         'totalTrades', 'winningTrades', 'botArmed', 'circuitBreakerTripped',
+                         'executionMode', 'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidTradingAccount(incoming(), userId);
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidTradingAccount(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         // Action: Toggle bot armed state
+                         incoming().diff(existing()).affectedKeys().hasOnly(['botArmed', 'updatedAt']) ||
+                         // Action: Reset or unlock circuit breaker
+                         incoming().diff(existing()).affectedKeys().hasOnly(['circuitBreakerTripped', 'botArmed', 'dailyStartEquity', 'dailyRealizedPnl', 'updatedAt']) ||
+                         // Action: Record closed trade settlement
+                         incoming().diff(existing()).affectedKeys().hasOnly(['accountBalance', 'dailyRealizedPnl', 'realizedPnl', 'totalTrades', 'winningTrades', 'circuitBreakerTripped', 'botArmed', 'updatedAt']) ||
+                         // Action: Reset paper trading account capital
+                         incoming().diff(existing()).affectedKeys().hasOnly(['accountBalance', 'startingBalance', 'dailyStartEquity', 'dailyRealizedPnl', 'realizedPnl', 'totalTrades', 'winningTrades', 'botArmed', 'circuitBreakerTripped', 'updatedAt'])
+                       );
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /configs/{configId} {
+        allow get: if isOwner(userId) && isValidId(configId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(configId) &&
+                         incoming().keys().hasAll([
+                           'userId', 'riskPerTradePercent', 'maxDailyDrawdownPercent',
+                           'maxOpenPositions', 'minRiskRewardRatio', 'atrStopMultiplier',
+                           'trailingStopEnabled', 'breakEvenTriggerR', 'emaFastPeriod',
+                           'emaSlowPeriod', 'rsiPeriod', 'rsiOversold', 'rsiOverbought',
+                           'minConfluenceScore', 'watchedPairs', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'riskPerTradePercent', 'maxDailyDrawdownPercent',
+                           'maxOpenPositions', 'minRiskRewardRatio', 'atrStopMultiplier',
+                           'trailingStopEnabled', 'breakEvenTriggerR', 'emaFastPeriod',
+                           'emaSlowPeriod', 'rsiPeriod', 'rsiOversold', 'rsiOverbought',
+                           'minConfluenceScore', 'watchedPairs', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidBotRiskConfig(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(configId) &&
+                         isValidBotRiskConfig(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'riskPerTradePercent', 'maxDailyDrawdownPercent', 'maxOpenPositions',
+                           'minRiskRewardRatio', 'atrStopMultiplier', 'trailingStopEnabled',
+                           'breakEvenTriggerR', 'emaFastPeriod', 'emaSlowPeriod', 'rsiPeriod',
+                           'rsiOversold', 'rsiOverbought', 'minConfluenceScore', 'watchedPairs',
+                           'updatedAt'
+                         ]);
+
+        allow delete: if isOwner(userId) && isValidId(configId);
+      }
+
+      match /trades/{tradeId} {
+        allow get: if isOwner(userId) && isValidId(tradeId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(tradeId) &&
+                         incoming().status == 'OPEN' &&
+                         incoming().exitReason == 'ACTIVE' &&
+                         incoming().exitPrice == 0.0 &&
+                         incoming().closedAtMillis == 0 &&
+                         incoming().keys().hasAll([
+                           'userId', 'pair', 'side', 'status', 'lotSize', 'units',
+                           'entryPrice', 'stopLoss', 'takeProfit', 'trailingStopPrice',
+                           'exitPrice', 'riskAmountUsd', 'riskRewardRatio', 'realizedPnlUsd',
+                           'realizedPips', 'exitReason', 'signalSummary', 'confluenceScore',
+                           'timeframe', 'openedAtMillis', 'closedAtMillis', 'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'pair', 'side', 'status', 'lotSize', 'units',
+                           'entryPrice', 'stopLoss', 'takeProfit', 'trailingStopPrice',
+                           'exitPrice', 'riskAmountUsd', 'riskRewardRatio', 'realizedPnlUsd',
+                           'realizedPips', 'exitReason', 'signalSummary', 'confluenceScore',
+                           'timeframe', 'openedAtMillis', 'closedAtMillis', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidForexTrade(incoming(), userId);
+
+        allow update: if isOwner(userId) &&
+                         isValidId(tradeId) &&
+                         isValidForexTrade(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         existing().status == 'OPEN' &&
+                         (
+                           // Action: Ratchet trailing stop / breakeven protection while open
+                           (
+                             incoming().status == 'OPEN' &&
+                             incoming().diff(existing()).affectedKeys().hasOnly(['trailingStopPrice', 'stopLoss', 'updatedAt'])
+                           ) ||
+                           // Action: Close trade with exact exit price and realized P&L (Terminal state lock)
+                           (
+                             incoming().status == 'CLOSED' &&
+                             incoming().exitReason in ['TP_HIT', 'SL_HIT', 'TRAILING_SL', 'SIGNAL_REVERSAL', 'MANUAL_CLOSE', 'CIRCUIT_BREAKER'] &&
+                             incoming().exitPrice > 0.0 &&
+                             incoming().closedAtMillis > 0 &&
+                             incoming().diff(existing()).affectedKeys().hasOnly([
+                               'status', 'exitPrice', 'realizedPnlUsd', 'realizedPips',
+                               'exitReason', 'closedAtMillis', 'updatedAt'
+                             ])
+                           )
+                         );
+
+        allow delete: if isOwner(userId) && isValidId(tradeId);
+      }
+    }
+  }
+}

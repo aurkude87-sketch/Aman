@@ -1,0 +1,6 @@
+{
+  "name": "PipGuard FX",
+  "description": "Automated forex trading bot using real-time global FX feeds, multi-indicator technical analysis (EMA, RSI, MACD, Bollinger Bands, ATR), exact entry/exit points, and strict capital-protection risk management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

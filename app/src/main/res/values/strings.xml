@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">PipGuard FX</string>
+    <string name="sign_in_headline">PipGuard FX</string>
+    <string name="sign_in_subtitle">Institutional-grade automated forex execution with quantitative technical indicators and strict capital protection.</string>
+    <string name="sign_in_google">Sign in with Google</string>
+    <string name="nav_dashboard">Markets</string>
+    <string name="nav_chart">Chart</string>
+    <string name="nav_terminal">Terminal</string>
+    <string name="nav_positions">Positions</string>
+    <string name="nav_ledger">Ledger</string>
+    <string name="nav_risk">Risk</string>
+    <string name="bot_armed">BOT ARMED</string>
+    <string name="bot_standby">STANDBY</string>
+    <string name="circuit_breaker_tripped">CIRCUIT BREAKER ACTIVE</string>
+    <string name="execute_setup">Execute Setup</string>
+    <string name="close_at_market">Close at Market</string>
+    <string name="reset_circuit_breaker">Unlock Circuit Breaker</string>
+    <string name="refresh_market_feed">Sync Live FX Rates</string>
+    <string name="sign_out">Sign Out</string>
+</resources>
